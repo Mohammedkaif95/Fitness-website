@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FitLife Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      color: white;
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    #bg-image, #bg-image-next {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: -2;
+      opacity: 1;
+      transition: opacity 2s ease-in-out;
+    }
+
+    #bg-image-next {
+      z-index: -1;
+      opacity: 0;
+    }
+
+    .dashboard-container { display: flex; }
+
+    aside.sidebar {
+      width: 250px;
+      background: rgba(50, 44, 44, 0.9);
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      padding: 20px;
+    }
+
+    .sidebar-header .logo {
+      font-size: 20px;
+      color: #fff;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
+    .sidebar-nav ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .sidebar-nav ul li {
+      margin-bottom: 15px;
+    }
+
+    .sidebar-nav ul li a {
+      color: white;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 5px;
+      transition: all 0.3s ease;
+    }
+
+    .sidebar-nav ul li a:hover {
+      background: rgba(255, 255, 255, 0.1);
+      text-decoration: none;
+    }
+
+    .sidebar-nav ul li a.ai-chat-link {
+      background: linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%);
+      margin-top: 10px;
+    }
+
+    .sidebar-nav ul li a.ai-chat-link:hover {
+      background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(76, 201, 240, 0.4);
+    }
+
+    .sidebar-footer {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+    }
+
+    .sidebar-footer a {
+      color: white;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .main-content {
+      margin-left: 270px;
+      padding: 20px;
+      flex-grow: 1;
+    }
+
+    .card {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px 0;
+      backdrop-filter: blur(6px);
+      color: #fff;
+    }
+
+    .header-profile {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .header-profile img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #fff;
+    }
+
+    header h1, header p {
+      margin: 0;
+    }
+
+    header p {
+      margin-top: 5px;
+    }
+
+    .day {
+      padding: 10px 15px;
+      background-color: #eee;
+      color: #000;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+      display: inline-block;
+      margin-right: 10px;
+    }
+
+    .day:hover {
+      background-color: #ffa94d;
+    }
+
+    .day.active {
+      background-color: #ff6600;
+      color: #fff;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .progress-circle {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: conic-gradient(#ff6600 calc(var(--value, 0) * 1deg), #333 0deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .nutrition-grid, .meal-plan, .progress-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .tip, .meal, .metric {
+      flex: 1 1 200px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    /* AI Chat Bot Floating Button */
+    .ai-chat-float {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #4cc9f0 0%, #4361ee 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(76, 201, 240, 0.4);
+      transition: all 0.3s ease;
+      z-index: 1000;
+      text-decoration: none;
+    }
+
+    .ai-chat-float:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 25px rgba(76, 201, 240, 0.6);
+    }
+
+    .ai-chat-float::after {
+      content: "AI Assistant";
+      position: absolute;
+      top: -40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .ai-chat-float:hover::after {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <!-- Background image layers -->
+  <div id="bg-image"></div>
+  <div id="bg-image-next"></div>
+  
+  <!-- AI Chat Bot Floating Button -->
+  <a href="ai.html" class="ai-chat-float">
+    <i class="fas fa-robot"></i>
+  </a>
+
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <i class="fas fa-dumbbell"></i> <span>FitZone</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+          <li><a href="#workout-section"><i class="fas fa-running"></i> Workouts</a></li>
+          <li><a href="#nutrition-section"><i class="fas fa-utensils"></i> Nutrition</a></li>
+          <li><a href="product1.html"><i class="fas fa-capsules"></i> Products</a></li>
+          <li><a href="#progress-section"><i class="fas fa-chart-line"></i> Progress</a></li>
+          <li><a href="#welcome-section"><i class="fas fa-cog"></i> Settings</a></li>
+          <!-- AI Chat Bot Link in Sidebar -->
+          <li><a href="ai.html" class="ai-chat-link"><i class="fas fa-robot"></i> AI Assistant</a></li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="Login.html" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Welcome -->
+      <header id="welcome-section">
+        <div class="header-profile">
+          <img src="https://hips.hearstapps.com/hmg-prod/images/mh-3-23-coleman-1648059910.png?crop=0.5xw:1xh;center,top&resize=1200:*" alt="User Profile">
+          <div>
+            <h1><i class="fas fa-dumbbell"></i> Welcome, <span id="usernameDisplay"></span></h1>
+            <p>Your fitness journey starts now</p>
+          </div>
+        </div>
+      </header>
+
+      <!-- Workout Plan -->
+      <section id="workout-section" class="workout-plan card">
+        <h2><i class="fas fa-dumbbell"></i> Sample Workout Plan</h2>
+        <div class="workout-days">
+          <div class="day active" data-day="monday">Monday</div>
+          <div class="day" data-day="tuesday">Tuesday</div>
+          <div class="day" data-day="wednesday">Wednesday</div>
+          <div class="day" data-day="thursday">Thursday</div>
+          <div class="day" data-day="friday">Friday</div>
+        </div>
+      </section>
+
+      <div class="workout-day-cards">
+        <div class="workout-card card" id="monday-exercises">
+          <h3>Strength Training (Upper Body)</h3>
+          <ul>
+            <li>Bench Press: 4 sets x 8 reps</li>
+            <li>Pull-ups: 3 sets x max reps</li>
+            <li>Overhead Press: 3 sets x 10 reps</li>
+            <li>Barbell Rows: 3 sets x 10 reps</li>
+            <li>Bicep Curls: 3 sets x 12 reps</li>
+          </ul>
+        </div>
+        <div class="workout-card card hidden" id="tuesday-exercises">
+          <h3>Cardio & Core</h3>
+          <ul>
+            <li>Running: 30 minutes</li>
+            <li>Plank: 3 sets x 60 seconds</li>
+            <li>Russian Twists: 3 sets x 20 reps</li>
+            <li>Leg Raises: 3 sets x 15 reps</li>
+          </ul>
+        </div>
+        <div class="workout-card card hidden" id="wednesday-exercises">
+          <h3>Strength Training (Lower Body)</h3>
+          <ul>
+            <li>Squats: 4 sets x 8 reps</li>
+            <li>Deadlifts: 3 sets x 6 reps</li>
+            <li>Lunges: 3 sets x 10 reps per leg</li>
+            <li>Calf Raises: 3 sets x 15 reps</li>
+          </ul>
+        </div>
+        <div class="workout-card card hidden" id="thursday-exercises">
+          <h3>Active Recovery</h3>
+          <ul>
+            <li>Yoga or Stretching: 30 minutes</li>
+            <li>Light Walking: 20 minutes</li>
+            <li>Foam Rolling: Full body</li>
+          </ul>
+        </div>
+        <div class="workout-card card hidden" id="friday-exercises">
+          <h3>Full Body Workout</h3>
+          <ul>
+            <li>Push-ups: 15 reps</li>
+            <li>Bodyweight Squats: 20 reps</li>
+            <li>Bent-over Rows: 12 reps</li>
+            <li>Plank: 45 seconds</li>
+            <li>Jumping Jacks: 30 seconds</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Nutrition -->
+      <section id="nutrition-section" class="nutrition-tips card">
+        <h2><i class="fas fa-apple-alt"></i> Nutrition Tips</h2>
+        <div class="nutrition-grid">
+          <div class="tip"><h3>Protein Intake</h3><p>Aim for 0.8–1g of protein per pound of body weight.</p></div>
+          <div class="tip"><h3>Hydration</h3><p>Drink half your body weight in oz of water daily.</p></div>
+          <div class="tip"><h3>Whole Foods</h3><p>Focus on whole, unprocessed foods.</p></div>
+          <div class="tip"><h3>Meal Timing</h3><p>Eat every 3–4 hours to sustain energy.</p></div>
+        </div>
+
+        <div class="sample-meal">
+          <h3>Sample Meal Plan</h3>
+          <div class="meal-plan">
+            <div class="meal"><h4>Breakfast</h4><p>Oatmeal with berries and protein.</p></div>
+            <div class="meal"><h4>Lunch</h4><p>Grilled chicken with quinoa and veggies.</p></div>
+            <div class="meal"><h4>Snack</h4><p>Greek yogurt with nuts.</p></div>
+            <div class="meal"><h4>Dinner</h4><p>Salmon with sweet potato and broccoli.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Progress Tracker -->
+      <section id="progress-section" class="progress-tracker card">
+        <h2><i class="fas fa-chart-line"></i> Progress Tracker</h2>
+        <div class="progress-metrics">
+          <div class="metric">
+            <h3>Workouts This Week</h3>
+            <div class="progress-circle" data-value="216"><span>3/5</span></div>
+          </div>
+          <div class="metric">
+            <h3>Weight</h3>
+            <div class="progress-number">
+              <span>165 <small>lbs</small></span><br>
+              <small>Down 5lbs this month</small>
+            </div>
+          </div>
+          <div class="metric">
+            <h3>Water Intake</h3>
+            <div class="progress-circle" data-value="288"><span>80%</span></div>
+          </div>
+        </div>
+        <div class="progress-goals">
+          <h3>Current Goals</h3>
+          <ul>
+            <li><input type="checkbox" id="goal1" checked><label for="goal1"> Work out 5 days this week</label></li>
+            <li><input type="checkbox" id="goal2"><label for="goal2"> Drink 80oz of water daily</label></li>
+            <li><input type="checkbox" id="goal3"><label for="goal3"> Increase bench press by 10lbs</label></li>
+            <li><input type="checkbox" id="goal4" checked><label for="goal4"> Track all meals this week</label></li>
+          </ul>
+        </div>
+        <!-- BMI Calculator -->
+        <div class="bmi-calculator" style="margin-top: 30px;">
+          <h3>Calculate Your BMI</h3>
+          <form id="bmiForm">
+            <label for="bmiWeight">Weight (kg):</label>
+            <input type="number" id="bmiWeight" required style="margin-right:10px; padding:5px;" />
+            <label for="bmiHeight">Height (cm):</label>
+            <input type="number" id="bmiHeight" required style="margin-right:10px; padding:5px;" />
+            <button type="submit" style="padding: 5px 10px; background-color: #ff6600; color: white; border: none; border-radius: 5px;">Calculate</button>
+          </form>
+          <div id="bmiResult" style="margin-top: 15px; font-weight: bold;"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+  // Background image rotation
+  const bgImages = [
+    'https://images.unsplash.com/photo-1554284126-aa88f22d8b74',
+    'https://images.unsplash.com/photo-1605296867304-46d5465a13f1',
+    'https://images.unsplash.com/photo-1556817411-31ae72fa3ea0',
+  ];
+
+  let currentImageIndex = 0;
+  const bgDiv = document.getElementById('bg-image');
+  const nextBgDiv = document.getElementById('bg-image-next');
+
+  function preloadImages() {
+    bgImages.forEach(src => {
+      const img = new Image();
+      img.src = src;
+    });
+  }
+
+  function changeBackgroundImage() {
+    bgDiv.style.backgroundImage = `url(${bgImages[currentImageIndex]})`;
+    nextBgDiv.style.backgroundImage = `url(${bgImages[(currentImageIndex + 1) % bgImages.length]})`;
+    nextBgDiv.style.opacity = 1;
+
+    setTimeout(() => {
+      bgDiv.style.backgroundImage = nextBgDiv.style.backgroundImage;
+      nextBgDiv.style.opacity = 0;
+    }, 2000);
+
+    currentImageIndex = (currentImageIndex + 1) % bgImages.length;
+  }
+
+  preloadImages();
+  changeBackgroundImage();
+  setInterval(changeBackgroundImage, 8000);
+
+  // Workout day toggle logic
+  const days = document.querySelectorAll('.day');
+  const cards = document.querySelectorAll('.workout-day-cards .card');
+
+  days.forEach(day => {
+    day.addEventListener('click', () => {
+      document.querySelector('.day.active')?.classList.remove('active');
+      day.classList.add('active');
+
+      cards.forEach(card => card.classList.add('hidden'));
+      const selectedCard = document.getElementById(`${day.dataset.day}-exercises`);
+      selectedCard?.classList.remove('hidden');
+    });
+  });
+
+  // Logout function
+  document.getElementById('logoutBtn').addEventListener('click', function (e) {
+    e.preventDefault();
+    localStorage.clear();
+    alert("Logged out successfully.");
+    window.location.href = 'login.html'; // change to your login page if needed
+  });
+
+  // BMI Calculator Logic
+  document.getElementById('bmiForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const weight = parseFloat(document.getElementById('bmiWeight').value);
+    const height = parseFloat(document.getElementById('bmiHeight').value) / 100;
+
+    if (!weight || !height) {
+      document.getElementById('bmiResult').textContent = "Please enter valid height and weight.";
+      return;
+    }
+
+    const bmi = weight / (height * height);
+    let status = '';
+
+    if (bmi < 18.5) status = 'Underweight';
+    else if (bmi < 25) status = 'Normal weight';
+    else if (bmi < 30) status = 'Overweight';
+    else status = 'Obese';
+
+    document.getElementById('bmiResult').textContent = `Your BMI is ${bmi.toFixed(1)} (${status})`;
+  });
+
+  // Initialize progress circles
+  document.addEventListener('DOMContentLoaded', function() {
+    const progressCircles = document.querySelectorAll('.progress-circle');
+    progressCircles.forEach(circle => {
+      const value = circle.getAttribute('data-value');
+      circle.style.setProperty('--value', value);
+    });
+  });
+</script>
+
+</body>
+</html>
